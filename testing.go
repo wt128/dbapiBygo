@@ -1,23 +1,22 @@
-package testing
+package main
 
 import (
 	// "crypto/rand"
 	// "encoding/base64"
 	"fmt"
-	"ggapi/db"
-	"ggapi/model"
-	"reflect"
+	"path/filepath"
+	"os"
+	// "ggapi/db"
+	// "ggapi/model"
+	// "reflect"
 	//"golang.org/x/crypto/bcrypt"
 )
 
-type User model.User
+
 func main(){
-	db := db.GetDB()
-	a := map[string]interface{}{}
-	sql := db.Model(&User{}).Select("id").Where("id = ?",24).First(&a)
-	if sql.Error != nil {
-		return
+	files, _ := filepath.Glob("view/users/*")
+	for _,f := range files {
+		fmt.Println(os.Remove(f) )
 	}
-	
 	
 }

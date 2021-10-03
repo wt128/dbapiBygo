@@ -2,6 +2,8 @@ package user
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"ggapi/db"
 	"ggapi/model"
 	"ggapi/service"
@@ -10,6 +12,7 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	imgupload "github.com/olahol/go-imageupload"
 )
 
 type Controller struct{}
@@ -28,14 +31,44 @@ func (pc Controller) Index(c *gin.Context){
 	c.JSON(200,p)
 	}
 
-func (pc Controller) Avatar(c *gin.Context){
-	file, err := c.FormFile("file")
+func (pc Controller) Setimg(c *gin.Context){
+	var id []uint
+	db := db.GetDB()
+	file, err := imgupload.Process(c.Request,"file")
+	sid := c.Request.FormValue("sid")
+	fmt.Println(sid)
+	checkSid := db.Model(&User{}).Where("remember = ?",sid).Pluck("id",&id)
+	if checkSid.Error != nil {
+		c.AbortWithStatusJSON(403,gin.H{"errrorMessages":"不正なリクエストです。"})
+		c.Abort()
+	}
+
 	if err != nil {
 		c.AbortWithStatus(403)
 	}
-	c.SaveUploadedFile(file,"../../view")
-	c.JSON()
+
+	sql := db.Model(&User{}).Update("isimg",true)
+	if sql.Error != nil {
+		c.AbortWithStatus(403)
+	}
+
+	thumb, err := imgupload.ThumbnailJPEG(file, 300, 300, 90)
+	if err != nil {
+		panic(err)
+	}
+
+	
+	fmt.Println(id)
+	thumb.Save(fmt.Sprintf("./view/users/%d.jpg",id[0]))
+	//c.String(http.StatusOK, fmt.Sprintf("'%s' uploaded!", file))
+	c.String(http.StatusAccepted,"ok")
 }
+
+func (pc Controller) Getimg(c *gin.Context){
+	id := c.Params.ByName("id")
+	c.File(fmt.Sprintf("view/users/%s.jpg", id))
+}
+
 // 07 /  13 validationをなんとかする
 func (pc Controller) Create(c *gin.Context){
 	var u User
@@ -43,7 +76,6 @@ func (pc Controller) Create(c *gin.Context){
 	validate := validator.New()
 	
 	if err := c.ShouldBindJSON(&u); err != nil {
-		
 		c.JSON(http.StatusBadRequest, gin.H{"errorMessages": err.Error()})
 		c.Abort()
 		return
@@ -69,7 +101,7 @@ func (pc Controller) Create(c *gin.Context){
 				errorMessage = "パスワード入れてね"
 			}
 			errorMessages = append(errorMessages, errorMessage)
-		  }	
+		  }
 		c.JSON(403, gin.H{"errorMessages": errorMessages})
 		
 		//c.Redirect(302,"/user")
@@ -114,6 +146,8 @@ func (pc Controller) Delete(c *gin.Context) {
 
     id := c.Params.ByName("id")
 	db := db.GetDB()
+	files , _ := filepath.Glob(fmt.Sprintf("view/posts/%s*",id))
+	 //useridが投降した画像ファイル、ワイルドカードで取得
     var s user.Service
 	var sid Sid
 		if err := c.BindJSON(&sid); err != nil {
@@ -125,12 +159,17 @@ func (pc Controller) Delete(c *gin.Context) {
 		c.AbortWithStatusJSON(403,gin.H{"errorMessages":"不正なリクエストです。[session error]"})
 		return
 	}
+	
+	os.Remove(fmt.Sprintf("view/users/%s.jpg",id))
 
     if err := s.DeleteByID(id); err != nil {
         c.AbortWithStatus(403)
         fmt.Println(err)
     } else {
-        c.JSON(204, gin.H{"id #" + id: "deleted"})
+		for _,f := range files {
+			os.Remove(f) //ここでファイルをひとつづつ削除
+		}
+        c.JSON(200, gin.H{"id #" + id: "deleted"})
     }
 }
 

@@ -11,7 +11,7 @@ type User struct {
 	Email    string `json:"email" validate:"required,email" gorm:"unique;not null"`
 	Password string `json:"password" validate:"required"`
 	Remember string `json:"remember"`
-	
+	Isimg	 bool	`json:"isimg"`
 }
 
 type Post struct {
@@ -20,6 +20,7 @@ type Post struct {
 	User		User	`gorm:"foreignKey:UserID; references:ID; constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Title 		string    `json:"title" gorm:"not null;"`
 	Content 	string  `json:"content" gorm:"not null;"`
+	Isimg		bool	`json:"isimg"`
 	CreatedAt 	time.Time
 	UpdatedAt 	time.Time
  }

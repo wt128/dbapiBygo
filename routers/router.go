@@ -6,6 +6,7 @@ import (
 	"ggapi/controller/session"
 	"ggapi/controller/user"
 	"github.com/gin-contrib/cors"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,7 +18,9 @@ func Init() {
 
 func router() *gin.Engine {
 	r := gin.Default()
-	
+	r.MaxMultipartMemory = 8 << 20
+	//r.Use(static.Serve("/",static.LocalFile("./view",true)))
+	r.Static("/view","./view")
 	config := cors.DefaultConfig()
     config.AllowOrigins = []string{"http://localhost:3000"}
     r.Use(cors.New(config))
@@ -26,10 +29,12 @@ func router() *gin.Engine {
 	{
 		ctrl := user.Controller{}
         u.POST("", ctrl.Create)
-		u.POST("/avatar",ctrl.Avatar)
+		u.POST("/setimg",ctrl.Setimg)
+		u.GET("/getimg/:id",ctrl.Getimg)
         u.POST("/update", ctrl.Update)
         u.POST("/destory/:id", ctrl.Delete)
 		u.GET("/:id",ctrl.Index)
+		
 	}
 
 	s := r.Group("/session")
@@ -49,6 +54,8 @@ func router() *gin.Engine {
 		p.GET("/show",ctrl.Show) //記事一覧
 		p.GET("/total",ctrl.PostTotal)
 		p.GET("/:id",ctrl.GetOne)
+		p.POST("/setimg/:pid",ctrl.Setimg)
+		p.GET("/getimg/:pid",ctrl.Getimg)
 		p.POST("/update",ctrl.Update)
 	}
 

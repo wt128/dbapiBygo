@@ -2,12 +2,14 @@ package post
 
 import (
 	"fmt"
+	"os"
 	"ggapi/db"
 	"ggapi/model"
 	"math"
 	"net/http"
 	"strconv"
 	"github.com/gin-gonic/gin"
+	imgupload "github.com/olahol/go-imageupload"
 )
 
 type User model.User
@@ -59,13 +61,57 @@ func (pc Controller) Post(c *gin.Context){
 		fmt.Println(err)
 		return
 	}
-	c.JSON(204,post)
+	
+	c.String(200,strconv.Itoa(int(post.ID)))
 
+}
+
+func (pc Controller) Setimg(c *gin.Context){
+	var id []uint
+	db := db.GetDB()
+	pid := c.Params.ByName("pid")
+
+	file, err := imgupload.Process(c.Request,"file")
+	sid := c.Request.FormValue("sid")
+	fmt.Println(sid)
+
+	if err != nil {
+		c.AbortWithStatus(403)
+	}
+
+	checkSid := db.Model(&User{}).Where("remember = ?",sid).Pluck("id",&id)
+	if checkSid.Error != nil {
+		c.AbortWithStatusJSON(403,gin.H{"errrorMessages":"不正なリクエストです。"})
+		c.Abort()
+	}
+
+	thumb, err := imgupload.ThumbnailJPEG(file, 300, 300, 90)
+	if err != nil {
+		panic(err)
+	}
+	sql := db.Model(&Post{}).Where("id = ?",pid).Update("isimg",true)
+	if sql.Error != nil {
+		c.AbortWithStatus(403)
+	}
+	fmt.Println(id)
+	thumb.Save(fmt.Sprintf("./view/posts/%d%s.jpg",id[0],pid))
+	//c.String(http.StatusOK, fmt.Sprintf("'%s' uploaded!", file))
+	c.String(http.StatusAccepted,"ok")
+}
+
+func (pc Controller) Getimg(c *gin.Context){
+	var uid []uint
+	db := db.GetDB()
+	pid := c.Params.ByName("pid")
+	if err := db.Model(&Post{}).Where("id = ?",pid).Pluck("user_id",&uid).Error; err!= nil{
+		c.AbortWithStatus(403)
+	}
+	c.File(fmt.Sprintf("view/posts/%d%s.jpg",uid[0],pid))
 }
 
 func (pc Controller) GetOne(c *gin.Context){
 	var post Post
-	db := db.GetDB() 
+	db := db.GetDB()
 	pid := c.Params.ByName("id")
 	if err := db.Where("ID = ?",pid).First(&post).Error; err != nil{
 		c.JSON(403,gin.H{"errorMessage":"読み込みに失敗しました。"})
@@ -97,7 +143,7 @@ func (pc Controller) Delete(c *gin.Context){
 		c.AbortWithStatusJSON(403,gin.H{"errorMessages":"エラーが発生しました"})
 		return
 	}
-
+	os.Remove(fmt.Sprintf("view/posts/%d%d.jpg",uid,p.PostId))
 	c.JSON(200,gin.H{
 		"succcess":"削除しました.","uid":uid})
 }
@@ -126,9 +172,10 @@ func (pc Controller) Update(c *gin.Context){
 		c.AbortWithStatusJSON(403,gin.H{"errorMessages":"エラーが発生しました."})
 		return
 	}
-	c.JSON(200,gin.H{"ok":"変更しました。"})
-	
+
+	c.String(200, strconv.Itoa(int(p.Id)))
 }
+
 
 func checkSid(id interface{}) (interface{}){
 	db := db.GetDB()
