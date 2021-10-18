@@ -13,7 +13,7 @@ import (
 func Init() {
 	r := router()
 	//r.RunTLS(":8080", "./server.pem", "./server.key")
-	r.Run(":8080")
+	r.Run(":3333")
 }
 
 func router() *gin.Engine {

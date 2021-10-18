@@ -18,9 +18,9 @@ func Init()  {
 	err := godotenv.Load(".env")
 	if err != nil {
 		fmt.Printf("読み込み出来ませんでした: %v", err)
-	} 
+	}
 
-	dsn := "root:" + os.Getenv("DB_KEY") + "@tcp(127.0.0.1:3306)/mygo?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "go_test:" + os.Getenv("DB_KEY") + "@tcp(dockerMySQL)/my_go?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err = gorm.Open(mysql.Open(dsn),&gorm.Config{})
 	if err != nil {
 		panic(err)

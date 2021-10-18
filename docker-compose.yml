@@ -1,0 +1,32 @@
+version: '3'
+services:
+  go:
+    build:
+      context: .
+    command: /bin/sh -c "go run main.go"
+    stdin_open: true
+    tty: true
+    ports: 
+      - "3333:3333"
+    volumes:
+      - .:/app
+    depends_on:
+      - "db"
+  db:
+    image: mysql
+    container_name: dockerMySQL
+    environment:
+       MYSQL_ROOT_PASSWORD: root
+       MYSQL_DATABASE: my_go
+       MYSQL_USER: go_test
+       MYSQL_PASSWORD: password 
+       TZ: "Asia/Tokyo"
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./db/my.cnf:/etc/mysql/conf.d/my.cnf
+    ports: 
+      - "3306:3306"
+volumes:
+   db-data:
+      driver: local
