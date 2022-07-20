@@ -2,26 +2,26 @@ package db
 
 import (
 	"fmt"
-	"os"
 	"ggapi/model"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"os"
 )
 
 var (
-	db *gorm.DB
+	db  *gorm.DB
 	err error
 )
 
-func Init()  {
+func Init() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		fmt.Printf("読み込み出来ませんでした: %v", err)
 	}
 
 	dsn := "go_test:" + os.Getenv("DB_KEY") + "@tcp(dockerMySQL)/my_go?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err = gorm.Open(mysql.Open(dsn),&gorm.Config{})
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}

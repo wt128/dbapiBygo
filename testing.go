@@ -4,19 +4,18 @@ import (
 	// "crypto/rand"
 	// "encoding/base64"
 	"fmt"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	// "ggapi/db"
 	// "ggapi/model"
 	// "reflect"
 	//"golang.org/x/crypto/bcrypt"
 )
 
-
-func main(){
+func main() {
 	files, _ := filepath.Glob("view/users/*")
-	for _,f := range files {
-		fmt.Println(os.Remove(f) )
+	for _, f := range files {
+		fmt.Println(os.Remove(f))
 	}
-	
+
 }

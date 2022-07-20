@@ -8,5 +8,5 @@ import (
 func main() {
 
 	db.Init()
-    routers.Init()
+	routers.Init()
 }
